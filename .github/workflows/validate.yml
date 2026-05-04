@@ -1,0 +1,33 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  validate:
+    name: Validate integration package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile custom integration
+        run: python -m compileall custom_components/smart_gate
+
+      - name: Validate JSON
+        run: |
+          python -m json.tool hacs.json > /dev/null
+          python -m json.tool custom_components/smart_gate/manifest.json > /dev/null
+          python -m json.tool custom_components/smart_gate/translations/en.json > /dev/null
+          python -m json.tool custom_components/smart_gate/translations/ar.json > /dev/null
+          python -m json.tool custom_components/smart_gate/strings.json > /dev/null

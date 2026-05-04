@@ -1,0 +1,95 @@
+{
+  "config": {
+    "title": "Smart Gate",
+    "step": {
+      "user": {
+        "title": "Add Smart Gate device",
+        "description": "Enter the IP address of your Smart Gate device. You can find it from your router, Smart Gate app, or the device local API.",
+        "data": {
+          "host": "IP address or hostname",
+          "port": "Port"
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Smart Gate device discovered",
+        "description": "Home Assistant found {device_name} on your local network."
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the Smart Gate device. Make sure it is powered on and connected to the same network.",
+      "cannot_update_name": "Could not update the Smart Gate device name.",
+      "rename_not_supported": "This Smart Gate firmware does not support local device rename yet.",
+      "unsupported_product": "This Smart Gate product is not supported by this integration version.",
+      "unknown": "Unexpected error. Check Home Assistant logs for details."
+    },
+    "abort": {
+      "already_in_progress": "This Smart Gate device is already being configured.",
+      "already_configured": "This Smart Gate device has already been added.",
+      "cannot_connect": "Could not connect to the Smart Gate device. Make sure it is powered on and connected to the same network.",
+      "unsupported_product": "This Smart Gate product is not supported by this integration version.",
+      "unknown": "Unexpected error. Check Home Assistant logs for details."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Smart Gate options",
+        "description": "Change the Smart Gate device name or polling interval. Use this name field when you want the physical device and local network name to update.",
+        "data": {
+          "friendly_name_override": "Device name",
+          "poll_interval": "Polling interval"
+        }
+      }
+    },
+    "error": {
+      "cannot_update_name": "Could not update the Smart Gate device name.",
+      "rename_not_supported": "This Smart Gate firmware does not support local device rename yet."
+    }
+  },
+  "entity": {
+    "button": {
+      "identify": {
+        "name": "Identify"
+      }
+    },
+    "sensor": {
+      "api_version": {
+        "name": "API version"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "heap_free": {
+        "name": "Free heap"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "wifi_rssi": {
+        "name": "Wi-Fi RSSI"
+      },
+      "ip_address": {
+        "name": "IP address"
+      },
+      "last_command_source": {
+        "name": "Last command source"
+      },
+      "last_seen": {
+        "name": "Last seen"
+      }
+    },
+    "binary_sensor": {
+      "cloud_connection": {
+        "name": "Cloud connection"
+      },
+      "local_api": {
+        "name": "Local API"
+      }
+    },
+    "switch": {
+      "channel": {
+        "name": "SW{channel}"
+      }
+    }
+  }
+}

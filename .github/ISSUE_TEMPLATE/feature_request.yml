@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an improvement or new Smart Gate product capability.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: input
+    id: product_model
+    attributes:
+      label: Product model
+      placeholder: SG-Load-Box
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What are you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Desired behavior
+      description: Describe what you would like the integration to do.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes

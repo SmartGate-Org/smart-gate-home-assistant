@@ -1,0 +1,76 @@
+name: Bug report
+description: Report a problem with the Smart Gate Home Assistant integration.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a Smart Gate issue. Remove tokens, Wi-Fi credentials, private keys, and any sensitive fields before posting logs or API output.
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: 2026.4.3
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Smart Gate integration version
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: firmware_version
+    attributes:
+      label: Firmware version
+      placeholder: 3.0.1
+    validations:
+      required: true
+  - type: input
+    id: device_model
+    attributes:
+      label: Device model
+      placeholder: SG-Load-Box
+    validations:
+      required: true
+  - type: input
+    id: product_profile
+    attributes:
+      label: Product profile
+      placeholder: IO_PROFILE_6
+  - type: textarea
+    id: info
+    attributes:
+      label: Local API /v1/info output
+      description: Remove sensitive fields before posting.
+      render: json
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Home Assistant logs
+      render: text
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
