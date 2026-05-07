@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="custom_components/smart_gate/brand/logo.png" alt="Smart Gate" width="160">
+  <img src="custom_components/smart_gate/brand/smart-gate-purple-logo-w.png" alt="Smart Gate" width="640">
 </p>
 
 <h1 align="center">Smart Gate Home Assistant Integration</h1>
