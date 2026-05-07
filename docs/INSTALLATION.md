@@ -22,8 +22,9 @@ Use this flow for a new Home Assistant machine:
 11. Open Settings > Devices & services.
 12. Smart Gate should appear under Discovered.
 13. Click Add.
-14. Select an Area if desired.
-15. Finish setup.
+14. Enter Local API Token / Wi-Fi Password if the form asks for it.
+15. Select an Area if desired.
+16. Finish setup.
 
 If the integration does not appear after install, hard refresh your browser and restart Home Assistant once more.
 
@@ -48,7 +49,20 @@ If discovery is unavailable, add Smart Gate manually:
    8080
    ```
 
-The integration validates the device with `GET /v1/info` and uses the firmware `device_id` as the stable unique ID.
+6. Enter Local API Token / Wi-Fi Password when firmware auth is enabled.
+
+The integration validates the device with public `GET /v1/info`. It then validates protected `GET /v1/state`; if firmware auth is required and the token is missing or wrong, setup shows `invalid_auth`.
+
+## Zeroconf Discovery And Auth
+
+Firmware publishes `_smartgate._tcp.local`.
+
+If the device TXT record reports:
+
+- `auth=optional`: setup allows an optional token field.
+- `auth=required`: setup asks for Local API Token / Wi-Fi Password before creating the config entry.
+
+The integration never silently creates an auth-required device without a token.
 
 ## Manual File Installation
 
@@ -76,7 +90,8 @@ Restart Home Assistant after copying or updating the files.
 
 1. Confirm the device Local API is enabled.
 2. Confirm `http://DEVICE_IP:8080/v1/info` returns JSON.
-3. Confirm mDNS is available for discovery, or use manual setup.
-4. Press Identify after setup to locate the physical device.
-5. Rename the physical/network device from Smart Gate Options if needed.
-6. Rename channel entities in Home Assistant if desired.
+3. If required auth is enabled, keep the Local API Token or device Wi-Fi password ready.
+4. Confirm mDNS is available for discovery, or use manual setup.
+5. Press Identify after setup to locate the physical device.
+6. Rename the physical/network device from Smart Gate Options if needed.
+7. Rename channel entities in Home Assistant if desired.

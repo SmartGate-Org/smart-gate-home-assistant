@@ -1,12 +1,12 @@
 # Smart Gate Home Assistant Integration
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://www.hacs.xyz/)
-![Version](https://img.shields.io/badge/version-v0.4.0-blue)
+![Version](https://img.shields.io/badge/version-v0.5.0-blue)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.4%2B-18BCF2)
 
 Local Home Assistant integration for Smart Gate devices using LAN discovery and local HTTP control.
 
-This release candidate supports SG-Load-Box with local polling, Zeroconf discovery, one switch per relay channel, device identification, friendly naming, and runtime diagnostics.
+This release supports SG-Load-Box with local polling, Zeroconf discovery, local HTTP authentication, one switch per relay channel, device identification, friendly naming, and runtime diagnostics.
 
 ## Supported Products
 
@@ -23,11 +23,14 @@ This release candidate supports SG-Load-Box with local polling, Zeroconf discove
 - Local control without cloud dependency for Home Assistant control.
 - Zeroconf/mDNS discovery using `_smartgate._tcp.local`.
 - Manual IP/hostname fallback.
+- Local API token support for protected firmware endpoints.
+- Temporary MVP setup where the Local API Token can be the device Wi-Fi password.
+- Reauth flow when firmware returns `401 Unauthorized`.
+- Options Flow for host, port, Local API Token, device name, and polling interval.
 - One switch entity per Load Box channel.
 - Identify button for locating the physical device.
 - Runtime diagnostics: Local API, Cloud connection, Wi-Fi RSSI, IP address, last command source, last seen, uptime, free heap, firmware version, and API version.
-- Friendly device naming from firmware `friendly_name` or `hostname`.
-- Options Flow for device name and polling interval.
+- Friendly device naming from firmware `friendly_name`, or `Smart Gate Load Box <short_id>` fallback.
 - Boot physical-state safety handled by compatible SG-Load-Box firmware.
 
 ## Requirements
@@ -38,6 +41,7 @@ This release candidate supports SG-Load-Box with local polling, Zeroconf discove
 - Home Assistant and the device on the same LAN/VLAN, or otherwise routable.
 - TCP port `8080` reachable from Home Assistant.
 - mDNS available for auto-discovery, or manual setup by IP address.
+- If firmware auth is required, the Local API Token or current device Wi-Fi password.
 
 ## HACS Installation
 
@@ -55,6 +59,7 @@ This release candidate supports SG-Load-Box with local polling, Zeroconf discove
 7. Restart Home Assistant.
 8. Go to Settings > Devices & services.
 9. Smart Gate should appear as a discovered device. Click Add.
+10. Enter the Local API Token / Wi-Fi Password if prompted.
 
 ## Manual Installation
 
@@ -76,10 +81,23 @@ This release candidate supports SG-Load-Box with local polling, Zeroconf discove
 4. Install the integration through HACS or manual copy.
 5. Restart Home Assistant.
 6. Accept the discovered Smart Gate device, or add it manually with IP/hostname and port `8080`.
-7. Select the Area during setup if desired.
-8. Press Identify to locate the physical device.
-9. Rename the physical/network device from Smart Gate integration Options if needed.
-10. Rename channel entities in Home Assistant if you want dashboard-specific labels.
+7. Enter Local API Token / Wi-Fi Password when firmware auth is enabled.
+8. Select the Area during setup if desired.
+9. Press Identify to locate the physical device.
+10. Rename the physical/network device from Smart Gate integration Options if needed.
+11. Rename channel entities in Home Assistant if you want dashboard-specific labels.
+
+## Local Auth
+
+The integration always calls public `GET /v1/info` first. When a token is provided, setup also validates protected `GET /v1/state` using:
+
+```text
+Authorization: Bearer <token>
+```
+
+For the current firmware MVP, the token can be the device Wi-Fi password. This is temporary. Later firmware and app releases should replace it with an app-generated local token.
+
+The token is stored in the Home Assistant config entry and is never placed in device names, titles, diagnostics, or log messages by this integration.
 
 ## Diagnostics
 
@@ -101,24 +119,25 @@ Common checks:
 
 - Confirm the device is powered on and connected to Wi-Fi.
 - Open `http://DEVICE_IP:8080/v1/info` from a browser or terminal.
+- If `/v1/state` returns `401`, update the integration Local API Token / Wi-Fi Password.
 - Confirm the integration folder is exactly `custom_components/smart_gate`.
 - Restart Home Assistant after installing or updating the integration.
-- Hard refresh the browser if the Add Integration dialog does not show the custom integration.
+- Hard refresh the browser if the Add Integration dialog or logo does not update.
 
 ## Security
 
-The current local HTTP API is intended for trusted LAN/VLAN use. Do not expose device port `8080` to the internet.
+Do not expose device port `8080` to the internet. Treat the Local API Token and Wi-Fi password as secrets.
 
-Local authentication/token support is planned for a future firmware and integration release. Do not publish logs, screenshots, or issue reports containing tokens, Wi-Fi credentials, certificates, or private keys.
+The firmware currently supports a temporary Wi-Fi-password-as-local-token mode for MVP deployments. The final production model should use an app-generated local token and disable Wi-Fi password token acceptance.
 
 ## Development Status
 
-`v0.4.0` is the public HACS release candidate for SG-Load-Box local control.
+`v0.5.0` is the local-auth and branding polish release for SG-Load-Box local control.
 
 Known limitations:
 
 - SG-Load-Box is the only officially supported product in this release.
-- Local HTTP auth is not implemented yet unless supported by future firmware.
+- The temporary Wi-Fi-password token mode is not the final production security model.
 - This is a HACS custom integration, not an official Home Assistant Core integration.
 
 ## License

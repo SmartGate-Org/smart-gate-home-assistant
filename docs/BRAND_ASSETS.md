@@ -1,6 +1,6 @@
 # Brand Assets
 
-Home Assistant custom integrations can load local brand images from the integration package.
+Home Assistant 2026.3 and newer can load local brand images from a custom integration package.
 
 Required files:
 
@@ -11,19 +11,33 @@ custom_components/smart_gate/brand/dark_icon.png
 custom_components/smart_gate/brand/dark_logo.png
 ```
 
-Recommended sizes:
+High-density variants are also included:
 
-- `icon.png`: square, 256x256 or 512x512.
-- `dark_icon.png`: square, dark-mode optimized.
-- `logo.png`: wider logo, 512x128 or similar.
-- `dark_logo.png`: wider dark-mode optimized logo.
+```text
+custom_components/smart_gate/brand/icon@2x.png
+custom_components/smart_gate/brand/logo@2x.png
+custom_components/smart_gate/brand/dark_icon@2x.png
+custom_components/smart_gate/brand/dark_logo@2x.png
+```
 
 Guidelines:
 
 - Use official Smart Gate brand assets only.
 - Keep transparent backgrounds where possible.
 - Use PNG files with exact filenames.
-- Keep file sizes small enough for Home Assistant UI loading.
-- Restart Home Assistant and hard refresh the browser after changing brand assets.
+- Keep file sizes reasonable for Home Assistant UI loading.
+- Do not source brand files from firmware.
 
-Home Assistant 2026.3 and newer can use these local custom integration brand files.
+## Home Assistant And HACS Notes
+
+Home Assistant can display local custom integration brand files in Devices & Services on versions that support integration-local branding.
+
+HACS dashboard icon display may depend on HACS cache and version behavior. It may not always reflect local brand assets immediately after a file update.
+
+Troubleshooting:
+
+1. Restart Home Assistant.
+2. Clear browser cache or hard refresh.
+3. Reload the Smart Gate integration.
+4. Reinstall or update from HACS.
+5. Verify `/custom_components/smart_gate/brand/icon.png` exists on the Home Assistant host.

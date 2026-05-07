@@ -24,6 +24,10 @@ class SmartGateApiError(Exception):
         self.status = status
 
 
+class SmartGateAuthError(SmartGateApiError):
+    """Raised when the device rejects local API authentication."""
+
+
 class SmartGateRenameNotSupported(SmartGateApiError):
     """Raised when firmware does not support local rename."""
 
@@ -60,12 +64,20 @@ class SmartGateApiClient:
         session: aiohttp.ClientSession,
         host: str,
         port: int = 8080,
+        token: str | None = None,
     ) -> None:
         """Initialize the API client."""
         self._session = session
         self.host = host
         self.port = port
+        self._token = token or None
         self._base_url = URL.build(scheme="http", host=host, port=port)
+
+    def _headers(self) -> dict[str, str]:
+        """Return local API auth headers without logging secrets."""
+        if self._token:
+            return {"Authorization": f"Bearer {self._token}"}
+        return {}
 
     async def get_info(self) -> dict[str, Any]:
         """Return device information."""
@@ -148,6 +160,10 @@ class SmartGateApiClient:
         """Perform an HTTP request and decode a JSON object response."""
         url = self._base_url.join(URL(path))
         timeout = aiohttp.ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
+        headers = dict(kwargs.pop("headers", {}) or {})
+        headers.update(self._headers())
+        if headers:
+            kwargs["headers"] = headers
 
         try:
             async with self._session.request(
@@ -156,16 +172,22 @@ class SmartGateApiClient:
                 timeout=timeout,
                 **kwargs,
             ) as response:
+                if response.status == 401:
+                    raise SmartGateAuthError(
+                        f"{method} {path} rejected local API authentication",
+                        status=401,
+                    )
                 if response.status < 200 or response.status >= 300:
-                    body = await response.text()
                     raise SmartGateApiError(
-                        f"{method} {path} failed with HTTP {response.status}: {body[:120]}",
+                        f"{method} {path} failed with HTTP {response.status}",
                         status=response.status,
                     )
 
                 data = await response.json(content_type=None)
+        except SmartGateAuthError:
+            raise
         except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            raise SmartGateApiError(f"{method} {path} failed: {err}") from err
+            raise SmartGateApiError(f"{method} {path} failed") from err
         except ValueError as err:
             raise SmartGateApiError(f"{method} {path} returned invalid JSON") from err
 

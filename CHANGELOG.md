@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+- Added Local API Token / Wi-Fi Password setup support for firmware local HTTP auth.
+- Added auth-required Zeroconf handling so discovered devices ask for a token instead of being created silently.
+- Added reauth handling for firmware `401 Unauthorized` responses.
+- Added Options Flow support for host, port, Local API Token, device name, and polling interval.
+- Passed auth headers to protected state, control, identify, and rename requests.
+- Improved Smart Gate branding assets and documentation.
+- Updated relay display names to Channel 1, Channel 2, and so on while preserving unique IDs.
+
 ## 0.4.0
 
 - Prepared the Smart Gate Home Assistant integration for public HACS release.
@@ -12,7 +22,7 @@
 Known limitations:
 
 - SG-Load-Box is the only officially supported product in v0.4.0.
-- Local HTTP auth is not implemented yet unless supported by future firmware.
+- Local HTTP auth requires firmware support and Home Assistant v0.5.0 or newer.
 - Smart Gate is not yet submitted as an official Home Assistant Core integration.
 
 ## 0.3.0

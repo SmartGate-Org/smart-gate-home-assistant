@@ -24,21 +24,47 @@ dns-sd -L Smart-Gate-xxxx _smartgate._tcp local
 
 ## Manual Setup Cannot Connect
 
-Test the Local API from a machine on the same network:
+Test the public Local API from a machine on the same network:
 
 ```powershell
 Invoke-RestMethod http://DEVICE_IP:8080/v1/info
-Invoke-RestMethod http://DEVICE_IP:8080/v1/state
-```
-
-Curl examples:
-
-```bash
-curl http://DEVICE_IP:8080/v1/info
-curl http://DEVICE_IP:8080/v1/state
+Invoke-RestMethod http://DEVICE_IP:8080/v1/health
 ```
 
 If these fail, check the IP address, firewall rules, VLAN routing, and whether the device is still connected to Wi-Fi.
+
+## Invalid Local API Token
+
+If setup or runtime reauth shows `invalid_auth`, firmware rejected a protected Local API request with HTTP `401`.
+
+For current MVP firmware, enter the device Wi-Fi password in the field labeled:
+
+```text
+Local API Token / Wi-Fi Password
+```
+
+Later firmware may use an app-generated local token instead.
+
+PowerShell test with a token variable:
+
+```powershell
+$headers = @{ Authorization = "Bearer <token>" }
+Invoke-RestMethod -Uri "http://DEVICE_IP:8080/v1/state" -Headers $headers
+```
+
+Curl test:
+
+```bash
+curl -H "Authorization: Bearer <token>" http://DEVICE_IP:8080/v1/state
+```
+
+Do not paste real Wi-Fi passwords or tokens into screenshots, issue reports, public logs, or shared support chats.
+
+## Reauth Prompt Appears
+
+Home Assistant starts a reauth flow when firmware returns `401 Unauthorized` after setup.
+
+Use Settings > Devices & services > Smart Gate and enter the current Local API Token / Wi-Fi Password. You do not need to delete and re-add the integration.
 
 ## Already Configured
 
@@ -54,6 +80,7 @@ Another setup flow for the same Smart Gate device is already open. Finish or clo
 - Wi-Fi may be disconnected.
 - The Local API may be unreachable.
 - Home Assistant may not be able to route to the device network.
+- If auth was recently enabled, the stored token may need reauth.
 
 The Local API diagnostic is on only when Home Assistant can poll the device successfully.
 
@@ -63,7 +90,7 @@ Home Assistant local control can still work when Cloud connection is off. Cloud 
 
 ## Local API Disconnected
 
-If Local API is disconnected, Home Assistant cannot reach the device locally. Check power, Wi-Fi, IP address, VLAN routing, and port `8080`.
+If Local API is disconnected, Home Assistant cannot reach the device locally. Check power, Wi-Fi, IP address, VLAN routing, port `8080`, and token validity.
 
 ## Low Wi-Fi RSSI
 
@@ -94,28 +121,45 @@ Try reconnecting Wi-Fi, rebooting the device, or waiting for DHCP lease renewal.
 
 ## Logo Or Icon Not Showing
 
-- Confirm PNG files exist in `custom_components/smart_gate/brand/`.
+Home Assistant 2026.3 and newer can load local brand files from `custom_components/smart_gate/brand/`.
+
+Troubleshooting steps:
+
+- Confirm `custom_components/smart_gate/brand/icon.png` exists.
+- Confirm `logo.png`, `dark_icon.png`, and `dark_logo.png` exist.
 - Restart Home Assistant.
-- Hard refresh the browser.
+- Clear browser cache or hard refresh the browser.
+- Reload the Smart Gate integration.
+- Reinstall or update from HACS if files are stale.
+
+HACS dashboard icon display may depend on HACS cache/version behavior and may not immediately reflect local brand assets.
 
 ## API Tests
 
+Public:
+
 ```powershell
 Invoke-RestMethod http://DEVICE_IP:8080/v1/info
-Invoke-RestMethod http://DEVICE_IP:8080/v1/state
 Invoke-RestMethod http://DEVICE_IP:8080/v1/health
-Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/control -ContentType "application/json" -Body '{"request_id":"ha-test","relays":"1-0-0-0-0-0"}'
-Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/identify
-Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/config/name -ContentType "application/json" -Body '{"request_id":"ha-name-test","friendly_name":"Smart-Gate-Test"}'
+```
+
+Protected:
+
+```powershell
+$headers = @{ Authorization = "Bearer <token>" }
+Invoke-RestMethod http://DEVICE_IP:8080/v1/state -Headers $headers
+Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/control -Headers $headers -ContentType "application/json" -Body '{"request_id":"ha-test","relays":"1-0-0-0-0-0"}'
+Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/identify -Headers $headers
+Invoke-RestMethod -Method Post -Uri http://DEVICE_IP:8080/v1/config/name -Headers $headers -ContentType "application/json" -Body '{"request_id":"ha-name-test","friendly_name":"Smart-Gate-Test"}'
 ```
 
 ```bash
 curl http://DEVICE_IP:8080/v1/info
-curl http://DEVICE_IP:8080/v1/state
 curl http://DEVICE_IP:8080/v1/health
-curl -X POST http://DEVICE_IP:8080/v1/identify
-curl -X POST http://DEVICE_IP:8080/v1/control -H "Content-Type: application/json" -d '{"request_id":"ha-test","relays":"1-0-0-0-0-0"}'
-curl -X POST http://DEVICE_IP:8080/v1/config/name -H "Content-Type: application/json" -d '{"request_id":"ha-name-test","friendly_name":"Smart-Gate-Test"}'
+curl -H "Authorization: Bearer <token>" http://DEVICE_IP:8080/v1/state
+curl -X POST http://DEVICE_IP:8080/v1/identify -H "Authorization: Bearer <token>"
+curl -X POST http://DEVICE_IP:8080/v1/control -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"request_id":"ha-test","relays":"1-0-0-0-0-0"}'
+curl -X POST http://DEVICE_IP:8080/v1/config/name -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d '{"request_id":"ha-name-test","friendly_name":"Smart-Gate-Test"}'
 ```
 
 ## Logs

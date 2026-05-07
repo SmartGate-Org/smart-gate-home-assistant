@@ -9,11 +9,11 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import device_registry as dr
 
-from .api import SmartGateApiClient, SmartGateApiError
+from .api import SmartGateApiClient, SmartGateApiError, SmartGateAuthError
 from .const import (
     CONF_DEVICE_ID,
     CONF_FRIENDLY_NAME_OVERRIDE,
@@ -21,6 +21,7 @@ from .const import (
     CONF_POLL_INTERVAL,
     CONF_PORT,
     CONF_PRODUCT,
+    CONF_TOKEN,
     DEFAULT_PORT,
     DOMAIN,
     SCAN_INTERVAL_SECONDS,
@@ -60,12 +61,15 @@ async def async_setup_entry(
         session,
         entry.data[CONF_HOST],
         int(entry.data.get(CONF_PORT, DEFAULT_PORT)),
+        entry.data.get(CONF_TOKEN),
     )
 
     try:
         info = await api.get_info()
+    except SmartGateAuthError as err:
+        raise ConfigEntryAuthFailed("Invalid Smart Gate local API token") from err
     except SmartGateApiError as err:
-        raise ConfigEntryNotReady(f"Smart Gate device is unavailable: {err}") from err
+        raise ConfigEntryNotReady("Smart Gate device is unavailable") from err
 
     await _async_sync_config_entry_title(hass, entry, info)
 

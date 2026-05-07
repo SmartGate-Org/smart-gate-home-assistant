@@ -4,29 +4,42 @@
     "step": {
       "user": {
         "title": "Add Smart Gate device",
-        "description": "Enter the IP address of your Smart Gate device. You can find it from your router, Smart Gate app, or the device local API.",
+        "description": "Enter the device address and Local API Token. For current firmware, this can be the Wi-Fi password.",
         "data": {
           "host": "IP address or hostname",
-          "port": "Port"
+          "port": "Port",
+          "token": "Local API Token / Wi-Fi Password"
         }
       },
       "zeroconf_confirm": {
         "title": "Smart Gate device discovered",
-        "description": "Home Assistant found {device_name} on your local network."
+        "description": "Home Assistant found {device_name} on your local network. Enter the Local API Token or Wi-Fi password if local auth is enabled.",
+        "data": {
+          "token": "Local API Token / Wi-Fi Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update Smart Gate local token",
+        "description": "Enter the Local API Token or Wi-Fi password for this Smart Gate device.",
+        "data": {
+          "token": "Local API Token / Wi-Fi Password"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Could not connect to the Smart Gate device. Make sure it is powered on and connected to the same network.",
+      "invalid_auth": "Invalid Local API Token or Wi-Fi password.",
+      "cannot_connect": "Cannot connect to the Smart Gate device.",
       "cannot_update_name": "Could not update the Smart Gate device name.",
       "rename_not_supported": "This Smart Gate firmware does not support local device rename yet.",
-      "unsupported_product": "This Smart Gate product is not supported by this integration version.",
+      "unsupported_product": "This Smart Gate product is not supported yet.",
       "unknown": "Unexpected error. Check Home Assistant logs for details."
     },
     "abort": {
       "already_in_progress": "This Smart Gate device is already being configured.",
       "already_configured": "This Smart Gate device has already been added.",
-      "cannot_connect": "Could not connect to the Smart Gate device. Make sure it is powered on and connected to the same network.",
-      "unsupported_product": "This Smart Gate product is not supported by this integration version.",
+      "cannot_connect": "Cannot connect to the Smart Gate device.",
+      "reauth_successful": "Smart Gate local token was updated.",
+      "unsupported_product": "This Smart Gate product is not supported yet.",
       "unknown": "Unexpected error. Check Home Assistant logs for details."
     }
   },
@@ -34,16 +47,22 @@
     "step": {
       "init": {
         "title": "Smart Gate options",
-        "description": "Change the Smart Gate device name or polling interval. Use this name field when you want the physical device and local network name to update.",
+        "description": "Update connection settings, local auth token, device name, or polling interval. Leave the token field blank to keep the stored token.",
         "data": {
+          "host": "IP address or hostname",
+          "port": "Port",
+          "token": "Local API Token / Wi-Fi Password",
           "friendly_name_override": "Device name",
           "poll_interval": "Polling interval"
         }
       }
     },
     "error": {
+      "invalid_auth": "Invalid Local API Token or Wi-Fi password.",
+      "cannot_connect": "Cannot connect to the Smart Gate device.",
       "cannot_update_name": "Could not update the Smart Gate device name.",
-      "rename_not_supported": "This Smart Gate firmware does not support local device rename yet."
+      "rename_not_supported": "This Smart Gate firmware does not support local device rename yet.",
+      "unsupported_product": "This Smart Gate product is not supported yet."
     }
   },
   "entity": {
@@ -88,7 +107,7 @@
     },
     "switch": {
       "channel": {
-        "name": "SW{channel}"
+        "name": "Channel {channel}"
       }
     }
   }

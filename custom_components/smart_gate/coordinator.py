@@ -8,9 +8,10 @@ import logging
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import SmartGateApiClient, SmartGateApiError
+from .api import SmartGateApiClient, SmartGateApiError, SmartGateAuthError
 from .const import INFO_REFRESH_INTERVAL_UPDATES
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,6 +60,8 @@ class SmartGateDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             await self._async_check_state_shape(state)
             await self._async_refresh_info_if_due()
             return state
+        except SmartGateAuthError as err:
+            raise ConfigEntryAuthFailed("Invalid Smart Gate local API token") from err
         except SmartGateApiError as err:
             raise UpdateFailed(str(err)) from err
 

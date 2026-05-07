@@ -40,7 +40,7 @@ class SmartGateRelaySwitch(
 
     _attr_has_entity_name = True
     _attr_device_class = SwitchDeviceClass.OUTLET
-    _attr_icon = "mdi:light-switch"
+    _attr_icon = "mdi:electric-switch"
 
     def __init__(
         self,
@@ -52,7 +52,7 @@ class SmartGateRelaySwitch(
         self._channel_index = channel_index
         self._channel_number = channel_index + 1
 
-        self._channel_label = f"SW{self._channel_number}"
+        self._channel_label = f"Channel {self._channel_number}"
         self._attr_name = self._channel_label
         self._attr_unique_id = f"{self.device_id}_ch_{self._channel_number}"
 

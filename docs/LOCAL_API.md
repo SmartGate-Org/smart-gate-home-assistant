@@ -1,12 +1,48 @@
 # Local API
 
-Smart Gate Home Assistant integration v0.4.0 uses the SG-Load-Box Local HTTP API. Fields marked optional may be missing on older firmware; the integration remains backward compatible where possible.
+Smart Gate Home Assistant integration v0.5.0 uses the SG-Load-Box Local HTTP API. Fields marked optional may be missing on older firmware; the integration remains backward compatible where possible.
 
 Default port:
 
 ```text
 8080
 ```
+
+## Authentication
+
+Public endpoints:
+
+- `GET /v1/info`
+- `GET /v1/health`
+
+Protected endpoints when firmware local auth is required:
+
+- `GET /v1/state`
+- `POST /v1/control`
+- `POST /v1/identify`
+- `POST /v1/config/name`
+
+The integration sends the configured token as:
+
+```text
+Authorization: Bearer <token>
+```
+
+Firmware also accepts:
+
+```text
+X-SG-Local-Token: <token>
+```
+
+For the current MVP firmware, `<token>` may be the device Wi-Fi password. This is temporary and should later be replaced by an app-generated local token. The firmware does not expose the token through `/v1/info`, mDNS, BLE, UART logs, or diagnostics.
+
+Unauthorized response:
+
+```json
+{"ok":false,"error":"unauthorized"}
+```
+
+Home Assistant maps HTTP `401` to `invalid_auth` during setup and to a reauth request at runtime.
 
 ## GET /v1/info
 
@@ -16,7 +52,7 @@ Returns static product and discovery metadata.
 {
   "product": "SG-Load-Box",
   "profile": "IO_PROFILE_6",
-  "fw": "3.0.1",
+  "fw": "3.0.5",
   "device_id": "id-7a4c2c",
   "short_id": "7a4c2c",
   "friendly_name": "Smart-Gate-7a4c2c",
@@ -52,7 +88,7 @@ Optional but used when present:
 
 ## GET /v1/state
 
-Returns current relay state and runtime diagnostics.
+Returns current relay state and runtime diagnostics. This endpoint may require auth.
 
 ```json
 {
@@ -84,27 +120,11 @@ Required for relay entities:
 - `relay_mask`
 - `channels`
 
-Optional diagnostics:
-
-- `cloud_shadow`
-- `cloud_shadow_mask`
-- `source`
-- `last_command_source`
-- `uptime`
-- `heap_free`
-- `wifi_connected`
-- `wifi_rssi`
-- `ip_address`
-- `wss_connected`
-- `wss_status`
-- startup sync flags
-- command/publish timestamps
-
 Compatible firmware protects boot physical state by reading MCP/manual inputs at startup, publishing that state to cloud, and ignoring stale retained cloud switch state during the startup sync window.
 
 ## GET /v1/health
 
-Returns compact health information.
+Returns compact health information. This endpoint is public.
 
 ```json
 {
@@ -131,7 +151,7 @@ Home Assistant primarily polls `/v1/state` and does not need to poll `/v1/health
 
 ## POST /v1/control
 
-Sets all relay channels with one full relay string.
+Sets all relay channels with one full relay string. This endpoint may require auth.
 
 Request:
 
@@ -159,7 +179,7 @@ Home Assistant verifies `actual_relays` after control and refreshes state immedi
 
 ## POST /v1/identify
 
-Requests the device identify behavior.
+Requests the device identify behavior. This endpoint may require auth.
 
 ```json
 {
@@ -171,7 +191,7 @@ The physical effect depends on firmware and hardware support.
 
 ## POST /v1/config/name
 
-Optional endpoint for firmware that supports local rename.
+Optional endpoint for firmware that supports local rename. This endpoint may require auth.
 
 Request:
 

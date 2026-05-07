@@ -23,11 +23,15 @@ def smart_gate_device_name(info: dict[str, Any], device_id: str, product: str) -
     if isinstance(friendly_name, str) and friendly_name.strip():
         return friendly_name.strip()
 
+    short_id = info.get("short_id")
+    product_display = PRODUCT_DISPLAY_NAMES.get(product)
+    if product_display and isinstance(short_id, str) and short_id.strip():
+        return f"{product_display} {short_id.strip()}"
+
     hostname = info.get("hostname")
     if isinstance(hostname, str) and hostname.strip():
         return hostname.strip()
 
-    product_display = PRODUCT_DISPLAY_NAMES.get(product)
     if product_display:
         return f"{product_display} {device_id}"
 
