@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="custom_components/smart_gate/brand/logo.png" alt="Smart Gate" width="160">
+</p>
+
+<h1 align="center">Smart Gate Home Assistant Integration</h1>
+
+<p align="center">
+  Local control, discovery, and relay management for Smart Gate devices.
+</p>
+
 # Smart Gate Home Assistant Integration
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://www.hacs.xyz/)
