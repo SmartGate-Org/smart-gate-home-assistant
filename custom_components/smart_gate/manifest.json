@@ -1,4 +1,4 @@
-﻿{
+{
     "domain":  "smart_gate",
     "name":  "Smart Gate",
     "codeowners":  [
@@ -15,7 +15,7 @@
     "requirements":  [
 
                      ],
-    "version":  "0.5.3",
+    "version":  "0.5.4",
     "zeroconf":  [
                      "_smartgate._tcp.local."
                  ]
