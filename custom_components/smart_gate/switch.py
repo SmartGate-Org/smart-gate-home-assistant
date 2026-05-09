@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Any
-from uuid import uuid4
 
 from homeassistant.components.switch import SwitchDeviceClass, SwitchEntity
 from homeassistant.core import HomeAssistant
@@ -11,7 +10,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import SmartGateConfigEntry
-from .api import SmartGateApiError, build_relays_string, parse_relays
+from .api import SmartGateApiError
 from .entity import SmartGateEntity
 
 
@@ -86,41 +85,11 @@ class SmartGateRelaySwitch(
         await self._async_set_channel(False)
 
     async def _async_set_channel(self, turn_on: bool) -> None:
-        """Update one channel by sending a full relay state string."""
-        current_relays = self.coordinator.relays_string
-        channels = self.coordinator.channels
-
+        """Update one channel through the coordinator command manager."""
         try:
-            parse_relays(current_relays, channels)
-            requested_relays = build_relays_string(
-                current_relays,
+            await self.coordinator.async_set_channel_state(
                 self._channel_index,
                 turn_on,
             )
         except SmartGateApiError as err:
-            raise HomeAssistantError(
-                "Smart Gate relay state is unavailable"
-            ) from err
-
-        request_id = f"ha-{uuid4().hex[:12]}"
-
-        try:
-            response = await self.api.set_relays(requested_relays, request_id=request_id)
-        except SmartGateApiError as err:
-            await self._safe_refresh()
             raise HomeAssistantError(f"Smart Gate relay command failed: {err}") from err
-
-        await self._safe_refresh()
-
-        actual_relays = response.get("actual_relays")
-        if actual_relays != requested_relays:
-            raise HomeAssistantError(
-                "Smart Gate relay command did not reach the requested state"
-            )
-
-    async def _safe_refresh(self) -> None:
-        """Refresh coordinator state without masking the original command error."""
-        try:
-            await self.coordinator.async_request_refresh()
-        except Exception:
-            pass

@@ -1,14 +1,22 @@
-{
-  "domain": "smart_gate",
-  "name": "Smart Gate",
-  "codeowners": ["@SmartGate-Org"],
-  "config_flow": true,
-  "dependencies": ["zeroconf"],
-  "documentation": "https://github.com/SmartGate-Org/smart-gate-home-assistant",
-  "issue_tracker": "https://github.com/SmartGate-Org/smart-gate-home-assistant/issues",
-  "integration_type": "hub",
-  "iot_class": "local_polling",
-  "requirements": [],
-  "version": "0.5.0",
-  "zeroconf": ["_smartgate._tcp.local."]
+﻿{
+    "domain":  "smart_gate",
+    "name":  "Smart Gate",
+    "codeowners":  [
+                       "@SmartGate-Org"
+                   ],
+    "config_flow":  true,
+    "dependencies":  [
+                         "zeroconf"
+                     ],
+    "documentation":  "https://github.com/SmartGate-Org/smart-gate-home-assistant",
+    "issue_tracker":  "https://github.com/SmartGate-Org/smart-gate-home-assistant/issues",
+    "integration_type":  "hub",
+    "iot_class":  "local_polling",
+    "requirements":  [
+
+                     ],
+    "version":  "0.5.3",
+    "zeroconf":  [
+                     "_smartgate._tcp.local."
+                 ]
 }
