@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="brand/logo.png" alt="Smart Gate" width="360">
 </p>
 
@@ -23,3 +23,4 @@ Official Home Assistant custom integration package for Smart Gate local smart ho
 For installation, usage, voice assistant setup, and troubleshooting, see the main repository README:
 
 https://github.com/SmartGate-Org/smart-gate-home-assistant
+

@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="brand/smart-gate.png" alt="Smart Gate" width="420">
+﻿<p align="center">
+  <img src="https://raw.githubusercontent.com/SmartGate-Org/smart-gate-home-assistant/main/brand/smart-gate.png" alt="Smart Gate" width="420">
 </p>
 
 # Smart Gate Home Assistant Integration
@@ -126,3 +126,4 @@ See [Troubleshooting](docs/TROUBLESHOOTING.md) for detailed steps.
 ## License
 
 MIT License. See [LICENSE](LICENSE).
+
