@@ -7,6 +7,7 @@ CONF_HOST = "host"
 CONF_PORT = "port"
 CONF_TOKEN = "token"
 CONF_AUTH_MODE = "auth_mode"
+CONF_CACHED_INFO = "cached_info"
 CONF_DEVICE_ID = "device_id"
 CONF_PRODUCT = "product"
 CONF_FRIENDLY_NAME_OVERRIDE = "friendly_name_override"
@@ -31,3 +32,16 @@ SUPPORTED_PRODUCTS = {
 PRODUCT_DISPLAY_NAMES = {
     "SG-Load-Box": "Smart Gate Load Box",
 }
+
+CACHED_INFO_KEYS = (
+    CONF_PRODUCT,
+    "profile",
+    "fw",
+    CONF_DEVICE_ID,
+    "short_id",
+    "friendly_name",
+    "hostname",
+    "api",
+    "channels",
+    "capabilities",
+)

@@ -94,6 +94,27 @@ class SmartGateDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except SmartGateApiError as err:
             raise UpdateFailed(str(err)) from err
 
+    async def async_try_initial_refresh(self) -> bool:
+        """Try one startup refresh without preventing offline setup."""
+        try:
+            data = await self._async_update_data()
+        except ConfigEntryAuthFailed:
+            raise
+        except UpdateFailed:
+            self._set_expected_channels_from_info()
+            self.last_update_success = False
+            return False
+
+        self.last_update_success = True
+        self.async_set_updated_data(data)
+        return True
+
+    def _set_expected_channels_from_info(self) -> None:
+        """Use cached info as expected shape when loading offline."""
+        channels = self.info.get("channels")
+        if isinstance(channels, int) and channels > 0:
+            self._expected_channels = channels
+
     async def async_set_channel_state(
         self,
         channel_index: int,
@@ -270,7 +291,11 @@ class SmartGateDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         self._updates_until_info_refresh = INFO_REFRESH_INTERVAL_UPDATES
-        new_info = await self.api.get_info()
+        try:
+            new_info = await self.api.get_info()
+        except SmartGateApiError:
+            return
+
         old_info = dict(self.info)
 
         old_channels = self._expected_channels

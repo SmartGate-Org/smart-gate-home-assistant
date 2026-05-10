@@ -15,6 +15,8 @@ from homeassistant.helpers import device_registry as dr
 
 from .api import SmartGateApiClient, SmartGateApiError, SmartGateAuthError
 from .const import (
+    CACHED_INFO_KEYS,
+    CONF_CACHED_INFO,
     CONF_DEVICE_ID,
     CONF_FRIENDLY_NAME_OVERRIDE,
     CONF_HOST,
@@ -25,6 +27,7 @@ from .const import (
     DEFAULT_PORT,
     DOMAIN,
     SCAN_INTERVAL_SECONDS,
+    SUPPORTED_PRODUCTS,
 )
 from .coordinator import SmartGateDataUpdateCoordinator
 from .entity import smart_gate_device_name
@@ -69,7 +72,16 @@ async def async_setup_entry(
     except SmartGateAuthError as err:
         raise ConfigEntryAuthFailed("Invalid Smart Gate local API token") from err
     except SmartGateApiError as err:
-        raise ConfigEntryNotReady("Smart Gate device is unavailable") from err
+        cached_info = _cached_info_from_entry(entry)
+        if cached_info is None:
+            raise ConfigEntryNotReady("Smart Gate device is unavailable") from err
+        info = cached_info
+        _LOGGER.debug(
+            "[Smart Gate] Device unavailable during setup; using cached info"
+        )
+    else:
+        _validate_info_for_entry(entry, info)
+        _async_update_cached_info(hass, entry, info)
 
     await _async_sync_config_entry_title(hass, entry, info)
 
@@ -93,6 +105,7 @@ async def async_setup_entry(
         )
         if old_name != new_name:
             _LOGGER.info("[Smart Gate] Device friendly name changed to %s", new_name)
+        _async_update_cached_info(hass, entry, new_info)
         await _async_sync_config_entry_title(hass, entry, new_info)
         _async_sync_device_registry_name(hass, entry, new_info)
 
@@ -107,7 +120,7 @@ async def async_setup_entry(
         info_changed_callback=_info_changed_callback,
         reload_callback=_reload_callback,
     )
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_try_initial_refresh()
 
     runtime_data = SmartGateRuntimeData(api=api, coordinator=coordinator, info=info)
     entry.runtime_data = runtime_data
@@ -176,3 +189,63 @@ def _async_sync_device_registry_name(
     )
     if device.name != title:
         device_registry.async_update_device(device.id, name=title)
+
+
+def _validate_info_for_entry(
+    entry: SmartGateConfigEntry,
+    info: dict[str, Any],
+) -> None:
+    """Validate live info matches this configured device."""
+    if info.get(CONF_PRODUCT) not in SUPPORTED_PRODUCTS:
+        raise ConfigEntryNotReady("Unsupported Smart Gate product")
+
+    if info.get(CONF_DEVICE_ID) != entry.data[CONF_DEVICE_ID]:
+        raise ConfigEntryNotReady("Smart Gate device identity changed")
+
+
+def _cacheable_info(info: dict[str, Any]) -> dict[str, Any]:
+    """Return the safe subset of /v1/info stored in the config entry."""
+    return {
+        key: info[key]
+        for key in CACHED_INFO_KEYS
+        if key in info and info[key] is not None
+    }
+
+
+def _cached_info_from_entry(entry: SmartGateConfigEntry) -> dict[str, Any] | None:
+    """Return cached device info if it can recreate entities safely."""
+    cached = entry.data.get(CONF_CACHED_INFO)
+    if not isinstance(cached, dict):
+        return None
+
+    info = dict(cached)
+    if info.get(CONF_DEVICE_ID) != entry.data.get(CONF_DEVICE_ID):
+        return None
+    if info.get(CONF_PRODUCT) != entry.data.get(CONF_PRODUCT):
+        return None
+    if info.get(CONF_PRODUCT) not in SUPPORTED_PRODUCTS:
+        return None
+
+    channels = info.get("channels")
+    if not isinstance(channels, int) or channels <= 0:
+        return None
+
+    return info
+
+
+def _async_update_cached_info(
+    hass: HomeAssistant,
+    entry: SmartGateConfigEntry,
+    info: dict[str, Any],
+) -> None:
+    """Store the latest non-secret /v1/info metadata on the config entry."""
+    cached = _cacheable_info(info)
+    if not cached:
+        return
+
+    data = dict(entry.data)
+    if data.get(CONF_CACHED_INFO) == cached:
+        return
+
+    data[CONF_CACHED_INFO] = cached
+    hass.config_entries.async_update_entry(entry, data=data)

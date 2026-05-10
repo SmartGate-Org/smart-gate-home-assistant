@@ -24,7 +24,9 @@ from .const import (
     AUTH_MODE_MANUAL,
     AUTH_MODE_OPTIONAL,
     AUTH_MODE_REQUIRED,
+    CACHED_INFO_KEYS,
     CONF_AUTH_MODE,
+    CONF_CACHED_INFO,
     CONF_DEVICE_ID,
     CONF_FRIENDLY_NAME_OVERRIDE,
     CONF_HOST,
@@ -154,6 +156,15 @@ def _device_title(info: dict[str, Any]) -> str:
     return "Smart Gate"
 
 
+def _cacheable_info(info: dict[str, Any]) -> dict[str, Any]:
+    """Return the safe subset of /v1/info stored in the config entry."""
+    return {
+        key: info[key]
+        for key in CACHED_INFO_KEYS
+        if key in info and info[key] is not None
+    }
+
+
 class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a Smart Gate config flow."""
 
@@ -194,7 +205,16 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         device_id = info[CONF_DEVICE_ID]
         await self.async_set_unique_id(device_id)
-        self._abort_if_unique_id_configured()
+        existing_entry = self._entry_for_unique_id(device_id)
+        if existing_entry is not None:
+            self._async_update_existing_entry_from_discovery(
+                existing_entry,
+                host,
+                port,
+                auth_mode,
+                info,
+            )
+            return self.async_abort(reason="already_configured")
 
         title = _device_title(info)
         self.context["title_placeholders"] = {"name": title}
@@ -204,6 +224,7 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_DEVICE_ID: device_id,
             CONF_PRODUCT: info[CONF_PRODUCT],
             CONF_AUTH_MODE: auth_mode,
+            CONF_CACHED_INFO: _cacheable_info(info),
         }
         self._discovered_placeholders = {"device_name": title}
         self._discovered_title = title
@@ -237,6 +258,7 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data = dict(self._discovered_data)
                 data[CONF_DEVICE_ID] = info[CONF_DEVICE_ID]
                 data[CONF_PRODUCT] = info[CONF_PRODUCT]
+                data[CONF_CACHED_INFO] = _cacheable_info(info)
                 if token:
                     data[CONF_TOKEN] = token
                 return self.async_create_entry(
@@ -266,10 +288,58 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_DEVICE_ID: info[CONF_DEVICE_ID],
             CONF_PRODUCT: info[CONF_PRODUCT],
             CONF_AUTH_MODE: auth_mode,
+            CONF_CACHED_INFO: _cacheable_info(info),
         }
         if token:
             data[CONF_TOKEN] = token
         return self.async_create_entry(title=_device_title(info), data=data)
+
+    def _entry_for_unique_id(
+        self,
+        unique_id: str,
+    ) -> config_entries.ConfigEntry | None:
+        """Return an existing entry for a discovered device ID."""
+        return next(
+            (
+                entry
+                for entry in self._async_current_entries()
+                if entry.unique_id == unique_id
+            ),
+            None,
+        )
+
+    def _async_update_existing_entry_from_discovery(
+        self,
+        entry: config_entries.ConfigEntry,
+        host: str,
+        port: int,
+        auth_mode: str,
+        info: dict[str, Any],
+    ) -> None:
+        """Update an existing entry with discovery metadata."""
+        data = dict(entry.data)
+        reload_needed = False
+
+        if data.get(CONF_HOST) != host:
+            data[CONF_HOST] = host
+            reload_needed = True
+        if int(data.get(CONF_PORT, DEFAULT_PORT)) != port:
+            data[CONF_PORT] = port
+            reload_needed = True
+        if data.get(CONF_AUTH_MODE) != auth_mode:
+            data[CONF_AUTH_MODE] = auth_mode
+
+        cached_info = _cacheable_info(info)
+        if data.get(CONF_CACHED_INFO) != cached_info:
+            data[CONF_CACHED_INFO] = cached_info
+
+        if data != entry.data:
+            self.hass.config_entries.async_update_entry(entry, data=data)
+
+        if reload_needed:
+            self.hass.async_create_task(
+                self.hass.config_entries.async_reload(entry.entry_id)
+            )
 
     async def async_step_user(
         self,
@@ -321,7 +391,7 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             token = _token_from_input(user_input)
             data = dict(self._reauth_entry.data)
             try:
-                await _async_validate_device(
+                info = await _async_validate_device(
                     self.hass,
                     data[CONF_HOST],
                     int(data.get(CONF_PORT, DEFAULT_PORT)),
@@ -338,6 +408,7 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data[CONF_TOKEN] = token
                 else:
                     data.pop(CONF_TOKEN, None)
+                data[CONF_CACHED_INFO] = _cacheable_info(info)
                 self.hass.config_entries.async_update_entry(self._reauth_entry, data=data)
                 await self.hass.config_entries.async_reload(self._reauth_entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
@@ -429,6 +500,8 @@ class SmartGateOptionsFlow(config_entries.OptionsFlow):
                         errors["base"] = "cannot_update_name"
                     else:
                         applied_name = response.get("friendly_name", new_name)
+                        validated_info = dict(validated_info)
+                        validated_info["friendly_name"] = applied_name
                         options[CONF_FRIENDLY_NAME_OVERRIDE] = applied_name
                         self.hass.config_entries.async_update_entry(self._entry, title=applied_name)
                 elif not new_name:
@@ -441,6 +514,7 @@ class SmartGateOptionsFlow(config_entries.OptionsFlow):
                     data[CONF_TOKEN] = new_token
                 else:
                     data.pop(CONF_TOKEN, None)
+                data[CONF_CACHED_INFO] = _cacheable_info(validated_info)
                 self.hass.config_entries.async_update_entry(
                     self._entry,
                     title=new_name or current_name,

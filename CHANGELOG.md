@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.5
+
+- Improved device reboot/offline recovery.
+- Added cached device info fallback.
+- Added Zeroconf host/port update for existing devices.
+- No firmware changes required.
+
 ## 0.5.0
 
 - Added Local API Token / Wi-Fi Password setup support for firmware local HTTP auth.
