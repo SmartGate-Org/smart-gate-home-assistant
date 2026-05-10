@@ -1,63 +1,50 @@
 # Changelog
 
+## 0.5.6
+
+- Refreshed public documentation for installation, setup, usage, voice assistants, security, and troubleshooting.
+- Updated repository presentation for HACS and end-user installation.
+
 ## 0.5.5
 
-- Improved device reboot/offline recovery.
-- Added cached device info fallback.
-- Added Zeroconf host/port update for existing devices.
-- No firmware changes required.
+- Improved recovery after Smart Gate device reboot or temporary offline state.
+- Added cached device information fallback during Home Assistant startup.
+- Improved Zeroconf handling when device IP changes.
+
+## 0.5.4
+
+- Fixed manifest encoding issue affecting HACS installation.
+
+## 0.5.3
+
+- Improved multi-channel relay control for rapid Home Assistant, Google Assistant, and Alexa commands.
 
 ## 0.5.0
 
-- Added Local API Token / Wi-Fi Password setup support for firmware local HTTP auth.
-- Added auth-required Zeroconf handling so discovered devices ask for a token instead of being created silently.
-- Added reauth handling for firmware `401 Unauthorized` responses.
-- Added Options Flow support for host, port, Local API Token, device name, and polling interval.
-- Passed auth headers to protected state, control, identify, and rename requests.
-- Improved Smart Gate branding assets and documentation.
-- Updated relay display names to Channel 1, Channel 2, and so on while preserving unique IDs.
+- Added Local API Token / Wi-Fi Password setup.
+- Added Smart Gate branding.
+- Added reauthentication and options flow.
 
 ## 0.4.0
 
-- Prepared the Smart Gate Home Assistant integration for public HACS release.
-- Added release documentation, install guide, troubleshooting guide, Local API docs, product support notes, and release checklist.
-- Added GitHub validation workflow, issue templates, and pull request template.
-- Confirmed source-based HACS packaging with one integration under `custom_components/smart_gate`.
-- Kept SG-Load-Box support, existing switch unique IDs, Zeroconf discovery, manual setup, diagnostics, and Options Flow unchanged.
-- Documented compatible firmware behavior for boot physical-state protection and Local API v1 diagnostics.
-
-Known limitations:
-
-- SG-Load-Box is the only officially supported product in v0.4.0.
-- Local HTTP auth requires firmware support and Home Assistant v0.5.0 or newer.
-- Smart Gate is not yet submitted as an official Home Assistant Core integration.
+- Prepared the Smart Gate Home Assistant custom integration for HACS release.
+- Added installation, troubleshooting, Local API, product support, and brand documentation.
+- Added GitHub validation workflow and issue templates.
 
 ## 0.3.0
 
-- Added boot physical-input authority so MCP/manual startup state wins over stale cloud retained state.
-- Added startup cloud publish guard and stale WSS switch-state ignore window while preserving `doUpdateNow=true`.
-- Added firmware Local API diagnostics for Wi-Fi RSSI, IP address, WSS status, startup sync flags, and last command/source timestamps.
-- Added Home Assistant diagnostic sensors and binary sensors for Wi-Fi RSSI, IP address, Cloud connection, Local API, last command source, and last seen.
-- Added firmware identity helpers for `Smart-Gate-<short_product_id>` default naming.
-- Added `/v1/info` name fields: `short_id`, `friendly_name`, and `hostname`.
-- Added local rename endpoint `POST /v1/config/name`.
-- Updated mDNS instance and TXT records to publish Smart Gate friendly/network metadata.
-- Added Home Assistant Options Flow for device name and polling interval.
-- Added firmware friendly-name sync into Home Assistant defaults while respecting HA user renames.
-- Changed default relay labels to `SW1`, `SW2`, and so on while preserving switch unique IDs.
-- Added profile/channel-count-aware reload handling.
-- Updated onboarding, troubleshooting, and Local API documentation.
+- Added diagnostic sensors for Wi-Fi, IP address, cloud connection, Local API status, last command source, and last seen.
+- Added support for firmware friendly names and local rename where available.
+- Improved device naming in Home Assistant.
 
 ## 0.2.0
 
-- Productized the Smart Gate Home Assistant custom integration for HACS packaging.
-- Added English and Arabic custom integration translations.
-- Added friendly SG-Load-Box device naming.
+- Added English and Arabic translations.
 - Added Identify button entity.
 - Added diagnostic sensors for uptime, free heap, firmware version, and API version.
 - Added HACS metadata and end-user documentation.
 
 ## 0.1.0
 
-- Initial local-only SG-Load-Box integration.
-- Added Zeroconf discovery, manual config flow, `/v1/state` polling, and one switch entity per relay channel.
+- Initial local Smart Gate Home Assistant integration.
+- Added Zeroconf discovery, manual setup, local state polling, and relay switch entities.

@@ -1,45 +1,31 @@
 # Product Support
 
-## Compatibility Table
+Smart Gate for Home Assistant currently supports Smart Gate Load Box devices with the local HTTP API enabled.
 
-| Product | Platform | Status | Entities | Notes |
-| --- | --- | --- | --- | --- |
-| SG-Load-Box | Local HTTP | Supported | Switches, Identify button, diagnostics | `IO_PROFILE_6` tested. Dynamic channel counts are supported when firmware reports correct `channels` and relay string length. |
-| SG-MiniBox | Planned | Planned | Switches | Future local API validation required. |
-| SG-Touch-Box | Planned | Planned | Switches | Future local API validation required. |
-| SG-Presence-Radar | Planned | Planned | Binary sensors and sensors | Not implemented in v0.4.0. |
-| SG-Temp-Hum | Planned | Planned | Sensors | Not implemented in v0.4.0. |
+## Compatibility
 
-## SG-Load-Box Profiles
+| Product | Status |
+| --- | --- |
+| SG-Load-Box | Supported |
+| SG-MiniBox | Planned |
+| SG-Touch-Box | Planned |
+| SG-Presence-Radar | Planned |
+| SG-Temp-Hum | Planned |
 
-The integration creates one switch entity per channel reported by firmware.
+## SG-Load-Box
 
-Tested:
+The integration creates one switch entity for each relay channel reported by the device. Channel entities can be renamed in Home Assistant to match the connected load, room, or circuit.
 
-- `IO_PROFILE_6`
-
-Supported by design but requiring runtime validation:
-
-- `IO_PROFILE_8`
-- `IO_PROFILE_12`
-- `IO_PROFILE_16`
-- Other firmware profiles that expose matching `channels`, `relays`, and `relay_mask` fields.
-
-Existing switch unique IDs are preserved:
-
-```text
-{device_id}_ch_{channel_number}
-```
+For lighting circuits, use the Home Assistant Switch as Light helper before exposing the entity to Google Assistant or Amazon Alexa.
 
 ## Firmware Requirements
 
-Recommended firmware for v0.4.0:
+The device firmware should provide:
 
-- Local HTTP API v1.
-- mDNS `_smartgate._tcp.local`.
-- `/v1/info` with stable `device_id`.
-- `/v1/state` with relay state and channel count.
-- Compatible runtime diagnostics for the full v0.4.0 diagnostic entity set.
-- Boot physical-state protection so MCP/manual startup state wins over stale retained cloud state.
+- Local HTTP API
+- Zeroconf/mDNS discovery
+- Stable device identity
+- Relay state reporting
+- Local relay control
 
-Older firmware can still work for basic relay control if `/v1/info`, `/v1/state`, and `/v1/control` are available.
+For setup requirements, see the [Installation Guide](INSTALLATION.md).

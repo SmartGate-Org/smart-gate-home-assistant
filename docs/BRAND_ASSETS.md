@@ -1,43 +1,32 @@
 # Brand Assets
 
-Home Assistant 2026.3 and newer can load local brand images from a custom integration package.
+This repository includes Smart Gate brand files for GitHub, HACS, and Home Assistant.
 
-Required files:
+## Repository Brand Files
 
-```text
-custom_components/smart_gate/brand/icon.png
-custom_components/smart_gate/brand/logo.png
-custom_components/smart_gate/brand/dark_icon.png
-custom_components/smart_gate/brand/dark_logo.png
-```
+| File | Use |
+| --- | --- |
+| `brand/icon.png` | Repository and HACS icon |
+| `brand/logo.png` | Repository README logo |
 
-High-density variants are also included:
+## Integration Brand Files
 
-```text
-custom_components/smart_gate/brand/icon@2x.png
-custom_components/smart_gate/brand/logo@2x.png
-custom_components/smart_gate/brand/dark_icon@2x.png
-custom_components/smart_gate/brand/dark_logo@2x.png
-```
+| File | Use |
+| --- | --- |
+| `custom_components/smart_gate/brand/icon.png` | Home Assistant integration icon |
+| `custom_components/smart_gate/brand/logo.png` | Home Assistant integration logo |
 
-Guidelines:
+Dark and high-density variants are also included for supported Home Assistant views.
 
-- Use official Smart Gate brand assets only.
-- Keep transparent backgrounds where possible.
-- Use PNG files with exact filenames.
-- Keep file sizes reasonable for Home Assistant UI loading.
-- Do not source brand files from firmware.
+## Cache Behavior
 
-## Home Assistant And HACS Notes
+Home Assistant and HACS may cache logos and icons after installation or update.
 
-Home Assistant can display local custom integration brand files in Devices & Services on versions that support integration-local branding.
-
-HACS dashboard icon display may depend on HACS cache and version behavior. It may not always reflect local brand assets immediately after a file update.
-
-Troubleshooting:
+If the logo does not update:
 
 1. Restart Home Assistant.
-2. Clear browser cache or hard refresh.
-3. Reload the Smart Gate integration.
-4. Reinstall or update from HACS.
-5. Verify `/custom_components/smart_gate/brand/icon.png` exists on the Home Assistant host.
+2. Hard refresh the browser.
+3. Clear browser cache.
+4. Redownload Smart Gate from HACS if needed.
+
+The integration package should keep the brand filenames unchanged so Home Assistant and HACS can find them consistently.

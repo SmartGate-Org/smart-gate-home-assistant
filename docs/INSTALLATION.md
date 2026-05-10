@@ -1,97 +1,79 @@
-# Installation
+# Installation Guide
 
-## HACS Installation
+This guide explains how to install and set up the Smart Gate Home Assistant integration.
 
-Use this flow for a new Home Assistant machine:
+## Requirements
 
-1. Install HACS if it is not already installed.
-2. Open HACS > Integrations.
-3. Open the three-dot menu and choose Custom repositories.
-4. Add:
+- Home Assistant 2026.4.0 or newer
+- HACS 2.0.0 or newer
+- Smart Gate device connected to the same local network as Home Assistant
+- Local API enabled on the device firmware
+- Local API token, or Wi-Fi password for current MVP firmware
+
+## Install With HACS
+
+1. Open Home Assistant.
+2. Open HACS.
+3. Go to Integrations.
+4. Open the three-dot menu and select Custom repositories.
+5. Add:
 
    ```text
    https://github.com/SmartGate-Org/smart-gate-home-assistant
    ```
 
-5. Set Category to Integration.
-6. Download Smart Gate.
-7. Restart Home Assistant.
-8. Power on the Smart Gate device.
-9. Add the device to Wi-Fi using the Smart Gate app or supported BLE provisioning.
-10. Confirm Home Assistant and the Smart Gate device are on the same LAN/VLAN.
-11. Open Settings > Devices & services.
-12. Smart Gate should appear under Discovered.
-13. Click Add.
-14. Enter Local API Token / Wi-Fi Password if the form asks for it.
-15. Select an Area if desired.
-16. Finish setup.
+6. Set Category to Integration.
+7. Select Add.
+8. Search for Smart Gate in HACS.
+9. Download the Smart Gate integration.
+10. Restart Home Assistant.
 
-If the integration does not appear after install, hard refresh your browser and restart Home Assistant once more.
-
-## Manual Fallback
-
-If discovery is unavailable, add Smart Gate manually:
+## Add The Integration
 
 1. Open Settings > Devices & services.
-2. Click Add Integration.
-3. Search for Smart Gate.
-4. Enter Host:
+2. If Smart Gate appears under Discovered, select Add.
+3. If it does not appear, select Add Integration and search for Smart Gate.
+4. Enter the setup fields:
+
+   | Field | Description |
+   | --- | --- |
+   | Host/IP address | Device hostname or local IP address |
+   | Port | Local API port, default `8080` |
+   | Local API Token / Wi-Fi Password | Local API token, or Wi-Fi password for current MVP firmware |
+
+5. Select an area if desired.
+6. Finish setup.
+
+The integration creates relay switch entities for supported Smart Gate Load Box channels.
+
+## Manual Installation
+
+Use manual installation only if HACS is not available.
+
+1. Download this repository.
+2. Copy this folder:
 
    ```text
-   Smart-Gate-xxxx.local
+   custom_components/smart_gate
    ```
 
-   or the device IP address.
-
-5. Enter Port:
+3. Place it in your Home Assistant configuration directory:
 
    ```text
-   8080
+   /homeassistant/custom_components/smart_gate/
    ```
 
-6. Enter Local API Token / Wi-Fi Password when firmware auth is enabled.
+4. Restart Home Assistant.
+5. Open Settings > Devices & services.
+6. Select Add Integration and search for Smart Gate.
 
-The integration validates the device with public `GET /v1/info`. It then validates protected `GET /v1/state`; if firmware auth is required and the token is missing or wrong, setup shows `invalid_auth`.
+## Updating
 
-## Zeroconf Discovery And Auth
+To update through HACS:
 
-Firmware publishes `_smartgate._tcp.local`.
+1. Open HACS > Integrations.
+2. Open Smart Gate.
+3. Select Update or Redownload.
+4. Restart Home Assistant after the update completes.
 
-If the device TXT record reports:
-
-- `auth=optional`: setup allows an optional token field.
-- `auth=required`: setup asks for Local API Token / Wi-Fi Password before creating the config entry.
-
-The integration never silently creates an auth-required device without a token.
-
-## Manual File Installation
-
-Copy this folder:
-
-```text
-custom_components/smart_gate
-```
-
-to your Home Assistant configuration directory:
-
-```text
-/homeassistant/custom_components/smart_gate/
-```
-
-Common Home Assistant OS host path:
-
-```text
-/mnt/data/supervisor/homeassistant/custom_components/smart_gate/
-```
-
-Restart Home Assistant after copying or updating the files.
-
-## First Setup Checklist
-
-1. Confirm the device Local API is enabled.
-2. Confirm `http://DEVICE_IP:8080/v1/info` returns JSON.
-3. If required auth is enabled, keep the Local API Token or device Wi-Fi password ready.
-4. Confirm mDNS is available for discovery, or use manual setup.
-5. Press Identify after setup to locate the physical device.
-6. Rename the physical/network device from Smart Gate Options if needed.
-7. Rename channel entities in Home Assistant if desired.
+If the integration does not appear after updating, refresh the browser and restart Home Assistant once more.

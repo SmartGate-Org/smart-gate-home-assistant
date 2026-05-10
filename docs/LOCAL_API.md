@@ -1,26 +1,19 @@
-# Local API
+# Local API Guide
 
-Smart Gate Home Assistant integration v0.5.0 uses the SG-Load-Box Local HTTP API. Fields marked optional may be missing on older firmware; the integration remains backward compatible where possible.
-
-Default port:
+Smart Gate devices expose a local HTTP API for Home Assistant control and diagnostics. The default local API port is:
 
 ```text
 8080
 ```
 
+Use placeholders when testing or documenting commands:
+
+- `<DEVICE_IP>` for the Smart Gate device IP address
+- `<LOCAL_API_TOKEN>` for the Local API Token
+
+Do not share real tokens or Wi-Fi passwords in screenshots, logs, or support requests.
+
 ## Authentication
-
-Public endpoints:
-
-- `GET /v1/info`
-- `GET /v1/health`
-
-Protected endpoints when firmware local auth is required:
-
-- `GET /v1/state`
-- `POST /v1/control`
-- `POST /v1/identify`
-- `POST /v1/config/name`
 
 The integration sends the configured token as:
 
@@ -28,190 +21,94 @@ The integration sends the configured token as:
 Authorization: Bearer <token>
 ```
 
-Firmware also accepts:
+Current MVP firmware may use the device Wi-Fi password as the Local API Token. Future firmware and app versions should use a dedicated local token.
+
+## Public Endpoints
+
+These endpoints can be used for basic device discovery and health checks:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /v1/info` | Device identity and capabilities |
+| `GET /v1/health` | Basic health and connectivity information |
+
+Example:
 
 ```text
-X-SG-Local-Token: <token>
+http://<DEVICE_IP>:8080/v1/info
 ```
 
-For the current MVP firmware, `<token>` may be the device Wi-Fi password. This is temporary and should later be replaced by an app-generated local token. The firmware does not expose the token through `/v1/info`, mDNS, BLE, UART logs, or diagnostics.
+## Protected Endpoints
 
-Unauthorized response:
+These endpoints may require the Local API Token:
 
-```json
-{"ok":false,"error":"unauthorized"}
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /v1/state` | Current relay state and runtime diagnostics |
+| `POST /v1/control` | Set relay channel states |
+| `POST /v1/identify` | Request device identify behavior |
+| `POST /v1/config/name` | Update the device friendly name when supported |
+
+Example protected request:
+
+```bash
+curl -H "Authorization: Bearer <LOCAL_API_TOKEN>" http://<DEVICE_IP>:8080/v1/state
 ```
 
-Home Assistant maps HTTP `401` to `invalid_auth` during setup and to a reauth request at runtime.
+## State
 
-## GET /v1/info
-
-Returns static product and discovery metadata.
-
-```json
-{
-  "product": "SG-Load-Box",
-  "profile": "IO_PROFILE_6",
-  "fw": "3.0.5",
-  "device_id": "id-7a4c2c",
-  "short_id": "7a4c2c",
-  "friendly_name": "Smart-Gate-7a4c2c",
-  "hostname": "Smart-Gate-7a4c2c",
-  "api": 1,
-  "port": 8080,
-  "channels": 6,
-  "capabilities": [
-    "relay",
-    "local_http",
-    "mcp23017",
-    "identify",
-    "rename"
-  ]
-}
-```
-
-Required for setup:
-
-- `product`
-- `device_id`
-- `channels`
-
-Optional but used when present:
-
-- `profile`
-- `fw`
-- `short_id`
-- `friendly_name`
-- `hostname`
-- `api`
-- `capabilities`
-
-## GET /v1/state
-
-Returns current relay state and runtime diagnostics. This endpoint may require auth.
+`GET /v1/state` returns the current relay state and related diagnostics. A typical relay state uses this format:
 
 ```json
 {
   "relays": "0-0-0-0-0-0",
   "relay_mask": 0,
-  "cloud_shadow": "0-0-0-0-0-0",
-  "cloud_shadow_mask": 0,
-  "channels": 6,
-  "source": "physical_startup",
-  "last_command_source": "physical_startup",
-  "uptime": 900,
-  "heap_free": 41032,
-  "wifi_connected": true,
-  "wifi_rssi": -54,
-  "ip_address": "192.168.1.83",
-  "wss_connected": true,
-  "wss_status": "connected",
-  "startup_sync_done": true,
-  "startup_cloud_publish_pending": false,
-  "startup_cloud_publish_done": true,
-  "last_command_at_ms": 123456,
-  "last_state_publish_at_ms": 123999
+  "channels": 6
 }
 ```
 
-Required for relay entities:
+## Control
 
-- `relays`
-- `relay_mask`
-- `channels`
+`POST /v1/control` sets relay channels with a full relay string.
 
-Compatible firmware protects boot physical state by reading MCP/manual inputs at startup, publishing that state to cloud, and ignoring stale retained cloud switch state during the startup sync window.
-
-## GET /v1/health
-
-Returns compact health information. This endpoint is public.
+Example request body:
 
 ```json
 {
-  "ok": true,
-  "uptime": 900,
-  "heap_free": 41032,
-  "heap_min": 32768,
-  "tasks": 5,
-  "local_api": "online",
-  "wifi": "connected",
-  "wifi_connected": true,
-  "wifi_rssi": -54,
-  "ip_address": "192.168.1.83",
-  "wss_connected": true,
-  "wss_status": "connected",
-  "startup_sync_done": true,
-  "startup_cloud_publish_pending": false,
-  "local_http": "running",
-  "mdns": "running"
+  "request_id": "ha-example",
+  "relays": "1-1-0-0-0-0"
 }
 ```
 
-Home Assistant primarily polls `/v1/state` and does not need to poll `/v1/health` every cycle.
+Example curl command:
 
-## POST /v1/control
+```bash
+curl -X POST http://<DEVICE_IP>:8080/v1/control \
+  -H "Authorization: Bearer <LOCAL_API_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"request_id":"ha-example","relays":"1-1-0-0-0-0"}'
+```
 
-Sets all relay channels with one full relay string. This endpoint may require auth.
+## Identify
 
-Request:
+`POST /v1/identify` asks the device to identify itself when supported by the device firmware and hardware.
+
+```bash
+curl -X POST http://<DEVICE_IP>:8080/v1/identify \
+  -H "Authorization: Bearer <LOCAL_API_TOKEN>"
+```
+
+## Rename
+
+`POST /v1/config/name` updates the device friendly name when supported.
+
+Example request body:
 
 ```json
 {
-  "request_id": "ha-123",
-  "relays": "1-1-1-0-0-0"
+  "request_id": "ha-name-example",
+  "friendly_name": "Garage Load Box"
 }
 ```
 
-Response:
-
-```json
-{
-  "ok": true,
-  "request_id": "ha-123",
-  "requested_relays": "1-1-1-0-0-0",
-  "actual_relays": "1-1-1-0-0-0",
-  "relay_mask": 7,
-  "source": "local_http"
-}
-```
-
-Home Assistant verifies `actual_relays` after control and refreshes state immediately.
-
-## POST /v1/identify
-
-Requests the device identify behavior. This endpoint may require auth.
-
-```json
-{
-  "ok": true
-}
-```
-
-The physical effect depends on firmware and hardware support.
-
-## POST /v1/config/name
-
-Optional endpoint for firmware that supports local rename. This endpoint may require auth.
-
-Request:
-
-```json
-{
-  "request_id": "ha-name-123",
-  "friendly_name": "Bedroom Load Box"
-}
-```
-
-Response:
-
-```json
-{
-  "ok": true,
-  "request_id": "ha-name-123",
-  "friendly_name": "Bedroom Load Box",
-  "hostname": "Bedroom-Load-Box",
-  "source": "local_http"
-}
-```
-
-Older firmware may return `404`. In that case the Home Assistant integration keeps working and shows a rename-not-supported message in Options.
+Older firmware may not support local rename. In that case, use the device name shown by Home Assistant or update the name from the Smart Gate app when available.

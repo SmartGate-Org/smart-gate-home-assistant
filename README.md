@@ -1,22 +1,27 @@
 <p align="center">
-  <img src="custom_components/smart_gate/brand/smart-gate-purple-logo-w.png" alt="Smart Gate" width="640">
-</p>
-
-<h1 align="center">Smart Gate Home Assistant Integration</h1>
-
-<p align="center">
-  Local control, discovery, and relay management for Smart Gate devices.
+  <img src="brand/smart-gate.png" alt="Smart Gate" width="420">
 </p>
 
 # Smart Gate Home Assistant Integration
 
+Official Home Assistant custom integration for Smart Gate local smart home devices.
+
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://www.hacs.xyz/)
-![Version](https://img.shields.io/badge/version-v0.5.0-blue)
-![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.4%2B-18BCF2)
+![Version](https://img.shields.io/badge/version-v0.5.6-blue)
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2026.4.0%2B-18BCF2)
 
-Local Home Assistant integration for Smart Gate devices using LAN discovery and local HTTP control.
+Smart Gate for Home Assistant adds local LAN control, discovery, and entity management for compatible Smart Gate devices. It is designed for reliable local use while still allowing selected entities to be exposed to Google Assistant and Amazon Alexa through Home Assistant.
 
-This release supports SG-Load-Box with local polling, Zeroconf discovery, local HTTP authentication, one switch per relay channel, device identification, friendly naming, and runtime diagnostics.
+## Features
+
+- Local LAN control
+- Smart Gate Load Box support
+- Zeroconf/mDNS discovery
+- Secure local API token support
+- Temporary Wi-Fi-password-as-token support for current firmware
+- Google Assistant and Amazon Alexa support through Home Assistant
+- Automatic recovery after device reboot
+- Multi-relay command handling for voice and group control
 
 ## Supported Products
 
@@ -28,35 +33,18 @@ This release supports SG-Load-Box with local polling, Zeroconf discovery, local 
 | SG-Presence-Radar | Planned |
 | SG-Temp-Hum | Planned |
 
-## Features
-
-- Local control without cloud dependency for Home Assistant control.
-- Zeroconf/mDNS discovery using `_smartgate._tcp.local`.
-- Manual IP/hostname fallback.
-- Local API token support for protected firmware endpoints.
-- Temporary MVP setup where the Local API Token can be the device Wi-Fi password.
-- Reauth flow when firmware returns `401 Unauthorized`.
-- Options Flow for host, port, Local API Token, device name, and polling interval.
-- One switch entity per Load Box channel.
-- Identify button for locating the physical device.
-- Runtime diagnostics: Local API, Cloud connection, Wi-Fi RSSI, IP address, last command source, last seen, uptime, free heap, firmware version, and API version.
-- Friendly device naming from firmware `friendly_name`, or `Smart Gate Load Box <short_id>` fallback.
-- Boot physical-state safety handled by compatible SG-Load-Box firmware.
-
 ## Requirements
 
-- Home Assistant Core 2026.4 or newer.
-- HACS 2.0 or newer is recommended.
-- Smart Gate SG-Load-Box firmware with Local HTTP API v1.
-- Home Assistant and the device on the same LAN/VLAN, or otherwise routable.
-- TCP port `8080` reachable from Home Assistant.
-- mDNS available for auto-discovery, or manual setup by IP address.
-- If firmware auth is required, the Local API Token or current device Wi-Fi password.
+- Home Assistant 2026.4.0 or newer
+- HACS 2.0.0 or newer
+- Smart Gate device on the same local network as Home Assistant
+- Local API enabled on the device firmware
+- Local API token, or Wi-Fi password for current MVP firmware
 
-## HACS Installation
+## Installation
 
 1. Open HACS in Home Assistant.
-2. Go to Integrations.
+2. Go to HACS > Integrations.
 3. Open the three-dot menu and select Custom repositories.
 4. Add this repository URL:
 
@@ -64,91 +52,76 @@ This release supports SG-Load-Box with local polling, Zeroconf discovery, local 
    https://github.com/SmartGate-Org/smart-gate-home-assistant
    ```
 
-5. Select category Integration.
+5. Choose Integration as the category.
 6. Download Smart Gate.
 7. Restart Home Assistant.
-8. Go to Settings > Devices & services.
-9. Smart Gate should appear as a discovered device. Click Add.
-10. Enter the Local API Token / Wi-Fi Password if prompted.
+8. Open Settings > Devices & services.
+9. Select Smart Gate from discovered devices, or choose Add Integration and search for Smart Gate.
 
-## Manual Installation
-
-1. Copy `custom_components/smart_gate` into your Home Assistant configuration folder:
-
-   ```text
-   /homeassistant/custom_components/smart_gate
-   ```
-
-2. Restart Home Assistant.
-3. Go to Settings > Devices & services.
-4. Select Add Integration and search for Smart Gate.
+See the full [Installation Guide](docs/INSTALLATION.md) for manual installation and update instructions.
 
 ## Setup
 
-1. Power on the Smart Gate device.
-2. Add the device to Wi-Fi using the Smart Gate mobile app or supported provisioning flow.
-3. Make sure Home Assistant can reach the device on the same LAN/VLAN.
-4. Install the integration through HACS or manual copy.
-5. Restart Home Assistant.
-6. Accept the discovered Smart Gate device, or add it manually with IP/hostname and port `8080`.
-7. Enter Local API Token / Wi-Fi Password when firmware auth is enabled.
-8. Select the Area during setup if desired.
-9. Press Identify to locate the physical device.
-10. Rename the physical/network device from Smart Gate integration Options if needed.
-11. Rename channel entities in Home Assistant if you want dashboard-specific labels.
+During setup, Home Assistant asks for:
 
-## Local Auth
+| Field | Description |
+| --- | --- |
+| Host/IP address | Device hostname or local IP address |
+| Port | Local API port, default `8080` |
+| Local API Token / Wi-Fi Password | Local API token, or Wi-Fi password for current MVP firmware |
 
-The integration always calls public `GET /v1/info` first. When a token is provided, setup also validates protected `GET /v1/state` using:
+After setup, the integration creates one relay switch entity for each supported Load Box channel.
 
-```text
-Authorization: Bearer <token>
-```
+## Usage
 
-For the current firmware MVP, the token can be the device Wi-Fi password. This is temporary. Later firmware and app releases should replace it with an app-generated local token.
+- Use the created switch entities directly in dashboards, automations, scenes, and scripts.
+- Rename relay channel entities in Home Assistant to match the connected loads.
+- For lighting circuits, create a Home Assistant Switch as Light helper before exposing the entity to voice assistants.
+- Expose only the entities you want Google Assistant or Alexa to control.
+- Use the Identify button to locate a physical Smart Gate device when supported by firmware.
 
-The token is stored in the Home Assistant config entry and is never placed in device names, titles, diagnostics, or log messages by this integration.
+## Voice Assistants
 
-## Diagnostics
+Google Assistant and Amazon Alexa work through Home Assistant entity exposure.
 
-- Local API shows whether Home Assistant can reach the device locally.
-- Cloud connection shows the firmware-reported WSS/cloud state.
-- Wi-Fi RSSI helps identify poor 2.4 GHz coverage.
-- IP address shows the current firmware-reported address, with HA host fallback.
-- Last command source shows whether the latest relay state came from `physical_startup`, `mcp_input`, `local_http`, or `wss`.
-- Last seen records the latest successful local poll.
-- Free heap, uptime, firmware version, and API version help support and firmware compatibility checks.
+For Home Assistant Cloud:
 
-If Cloud connection is offline but Local API is online, Home Assistant local control can still work.
+1. Open Settings > Voice assistants.
+2. Select the Google Assistant or Alexa integration.
+3. Open Expose.
+4. Choose the Smart Gate entities you want to expose.
 
-## Troubleshooting
-
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
-
-Common checks:
-
-- Confirm the device is powered on and connected to Wi-Fi.
-- Open `http://DEVICE_IP:8080/v1/info` from a browser or terminal.
-- If `/v1/state` returns `401`, update the integration Local API Token / Wi-Fi Password.
-- Confirm the integration folder is exactly `custom_components/smart_gate`.
-- Restart Home Assistant after installing or updating the integration.
-- Hard refresh the browser if the Add Integration dialog or logo does not update.
+For lamps and lighting circuits, create a Home Assistant Switch as Light helper first, then expose the light entity instead of the raw switch. This gives voice assistants a more natural lighting model.
 
 ## Security
 
-Do not expose device port `8080` to the internet. Treat the Local API Token and Wi-Fi password as secrets.
+- The integration sends the configured token using:
 
-The firmware currently supports a temporary Wi-Fi-password-as-local-token mode for MVP deployments. The final production model should use an app-generated local token and disable Wi-Fi password token acceptance.
+  ```text
+  Authorization: Bearer <token>
+  ```
 
-## Development Status
+- The token is stored in Home Assistant config entry storage.
+- Current firmware may use the device Wi-Fi password as a temporary Local API Token.
+- Future firmware and app versions should use a dedicated local token.
+- Do not expose the Smart Gate Local API port to the internet.
 
-`v0.5.0` is the local-auth and branding polish release for SG-Load-Box local control.
+## Troubleshooting Summary
 
-Known limitations:
+- Device unavailable: confirm power, Wi-Fi, IP address, port `8080`, and local network routing.
+- Wrong token: update the Local API Token / Wi-Fi Password from the Smart Gate integration reauthentication flow or options.
+- HACS update issue: reinstall or redownload Smart Gate from HACS, then restart Home Assistant.
+- Logo/cache issue: restart Home Assistant and hard refresh the browser.
+- Google/Alexa not seeing entities: confirm the entities are exposed in Home Assistant voice assistant settings.
 
-- SG-Load-Box is the only officially supported product in this release.
-- The temporary Wi-Fi-password token mode is not the final production security model.
-- This is a HACS custom integration, not an official Home Assistant Core integration.
+See [Troubleshooting](docs/TROUBLESHOOTING.md) for detailed steps.
+
+## Links
+
+- [Installation Guide](docs/INSTALLATION.md)
+- [Local API Guide](docs/LOCAL_API.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Brand Assets](docs/BRAND_ASSETS.md)
 
 ## License
 
