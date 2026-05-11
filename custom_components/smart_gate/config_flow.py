@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from typing import Any
+import time
+from typing import Any, Awaitable, Callable, TypeVar
 
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant, callback
@@ -46,10 +48,44 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 TOKEN_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
+SETUP_RETRY_SECONDS = 12
+SETUP_RETRY_DELAY_SECONDS = 1
+_T = TypeVar("_T")
 
 
 class UnsupportedProduct(Exception):
     """Raised when the discovered product is not supported."""
+
+
+async def _async_retry_setup_call(
+    description: str,
+    host: str,
+    port: int,
+    operation: Callable[[], Awaitable[_T]],
+) -> _T:
+    """Retry a setup-time local API call through transient boot outages."""
+    deadline = time.monotonic() + SETUP_RETRY_SECONDS
+    attempt = 1
+
+    while True:
+        try:
+            return await operation()
+        except SmartGateAuthError:
+            raise
+        except SmartGateApiError as err:
+            if time.monotonic() >= deadline:
+                raise
+            _LOGGER.debug(
+                "Smart Gate setup retry %s for %s at %s:%s after %s: %s",
+                attempt,
+                description,
+                host,
+                port,
+                err.__class__.__name__,
+                err,
+            )
+            attempt += 1
+            await asyncio.sleep(SETUP_RETRY_DELAY_SECONDS)
 
 
 def _token_from_input(user_input: dict[str, Any]) -> str:
@@ -197,7 +233,12 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.debug("Discovered Smart Gate service at %s:%s auth=%s", host, port, auth_mode)
 
         try:
-            info = await _async_get_info(self.hass, host, port)
+            info = await _async_retry_setup_call(
+                "zeroconf info",
+                host,
+                port,
+                lambda: _async_get_info(self.hass, host, port),
+            )
         except UnsupportedProduct:
             return self.async_abort(reason="unsupported_product")
         except SmartGateApiError:
@@ -242,11 +283,18 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             token = _token_from_input(user_input)
             try:
-                info = await _async_validate_device(
-                    self.hass,
-                    self._discovered_data[CONF_HOST],
-                    int(self._discovered_data[CONF_PORT]),
-                    token or None,
+                host = self._discovered_data[CONF_HOST]
+                port = int(self._discovered_data[CONF_PORT])
+                info = await _async_retry_setup_call(
+                    "zeroconf confirmation",
+                    host,
+                    port,
+                    lambda: _async_validate_device(
+                        self.hass,
+                        host,
+                        port,
+                        token or None,
+                    ),
                 )
             except UnsupportedProduct:
                 errors["base"] = "unsupported_product"
@@ -354,7 +402,12 @@ class SmartGateConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             token = _token_from_input(user_input)
 
             try:
-                info = await _async_validate_device(self.hass, host, port, token or None)
+                info = await _async_retry_setup_call(
+                    "manual setup",
+                    host,
+                    port,
+                    lambda: _async_validate_device(self.hass, host, port, token or None),
+                )
             except UnsupportedProduct:
                 errors["base"] = "unsupported_product"
             except SmartGateAuthError:
